@@ -10,22 +10,21 @@ const userSignInValidate = validateBody(userLoginSchema);
 const authRouter = express.Router();
 
 authRouter.post(
-  "/signup",
+  "/register",
   isEmptyBody,
   userSignUpValidate,
-  authControllers.signup
+  authControllers.register
 );
 
 authRouter.post(
-  "/signin",
+  "/login",
   isEmptyBody,
   userSignInValidate,
-  authControllers.signin
+  authControllers.login
 );
-
-authRouter.get("/current", authenticate, authControllers.getCurrent);
-
 authRouter.post("/logout", authenticate, authControllers.logout);
+
+authRouter.get("/current", authenticate, authControllers.current);
 
 authRouter.patch(
   "/users",

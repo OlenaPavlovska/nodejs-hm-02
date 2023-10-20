@@ -6,12 +6,12 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = "GrGiMgZCIldk67xiZ81t9jNqoiyAXyaN";
 
-const signup = async (req, res) => {
-  const { email, password, subscription } = req.body;
+const register = async (req, res) => {
+  const { email, password } = req.body;
   const user = await User.findOne({ email });
 
   if (user) {
-    throw HttpError(409, `${email} is already use`);
+    throw HttpError(409, "Email in use");
   }
 
   const hashPassword = await bcrypt.hash(password, 10);
@@ -19,7 +19,6 @@ const signup = async (req, res) => {
   const newUser = await User.create({
     ...req.body,
     password: hashPassword,
-    subscription,
   });
 
   res.status(201).json({
@@ -30,7 +29,7 @@ const signup = async (req, res) => {
   });
 };
 
-const signin = async (req, res, next) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -42,7 +41,6 @@ const signin = async (req, res, next) => {
     if (!passwordCompare) {
       throw HttpError(401, "Email or password is wrong");
     }
-    const { subscription } = user;
 
     const payload = {
       id: user._id,
@@ -52,8 +50,11 @@ const signin = async (req, res, next) => {
     await User.findByIdAndUpdate(user._id, { token });
 
     res.status(200).json({
-      token,
-      user: { email, subscription },
+      token: token,
+      user: {
+        email: user.email,
+        subscription: user.subscription,
+      },
     });
   } catch (error) {
     if (error.status === 401) {
@@ -65,17 +66,21 @@ const signin = async (req, res, next) => {
 
 const logout = async (req, res) => {
   const { _id } = req.user;
-  await User.findByIdAndUpdate(_id, { token: "" });
+  const result = await User.findByIdAndUpdate(_id, { token: "" });
+
+  if (!result) {
+    throw HttpError(404, "Not found");
+  }
 
   res.status(204).json({
     message: "Logout success",
   });
 };
 
-const getCurrent = async (req, res) => {
+const current = async (req, res) => {
   const { subscription, email } = req.user;
 
-  res.json({
+  res.status(200).json({
     email,
     subscription,
   });
@@ -92,9 +97,9 @@ const updateSubscription = async (req, res) => {
 };
 
 export default {
-  signup: ctrlWrapper(signup),
-  signin: ctrlWrapper(signin),
-  getCurrent: ctrlWrapper(getCurrent),
+  register: ctrlWrapper(register),
+  login: ctrlWrapper(login),
+  current: ctrlWrapper(current),
   updateSubscription: ctrlWrapper(updateSubscription),
   logout: ctrlWrapper(logout),
 };

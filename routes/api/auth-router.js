@@ -24,7 +24,7 @@ authRouter.post(
 );
 authRouter.post("/logout", authenticate, authControllers.logout);
 
-authRouter.get("/current", authenticate, authControllers.current);
+authRouter.get("/current", authenticate, authControllers.getCurrent);
 
 authRouter.patch(
   "/users",

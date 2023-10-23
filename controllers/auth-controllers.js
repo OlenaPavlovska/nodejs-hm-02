@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = "GrGiMgZCIldk67xiZ81t9jNqoiyAXyaN";
 
 const register = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, subscription } = req.body;
   const user = await User.findOne({ email });
 
   if (user) {
@@ -19,6 +19,7 @@ const register = async (req, res) => {
   const newUser = await User.create({
     ...req.body,
     password: hashPassword,
+    subscription,
   });
 
   res.status(201).json({
@@ -37,10 +38,13 @@ const login = async (req, res, next) => {
     if (!user) {
       throw HttpError(401, "Email or password is wrong");
     }
+
     const passwordCompare = await bcrypt.compare(password, user.password);
+
     if (!passwordCompare) {
       throw HttpError(401, "Email or password is wrong");
     }
+    const { subscription } = user;
 
     const payload = {
       id: user._id,
@@ -50,11 +54,8 @@ const login = async (req, res, next) => {
     await User.findByIdAndUpdate(user._id, { token });
 
     res.status(200).json({
-      token: token,
-      user: {
-        email: user.email,
-        subscription: user.subscription,
-      },
+      token,
+      user: { email, subscription },
     });
   } catch (error) {
     if (error.status === 401) {
@@ -77,10 +78,10 @@ const logout = async (req, res) => {
   });
 };
 
-const current = async (req, res) => {
+const getCurrent = async (req, res) => {
   const { subscription, email } = req.user;
 
-  res.status(200).json({
+  res.json({
     email,
     subscription,
   });
@@ -99,7 +100,7 @@ const updateSubscription = async (req, res) => {
 export default {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
-  current: ctrlWrapper(current),
+  getCurrent: ctrlWrapper(getCurrent),
   updateSubscription: ctrlWrapper(updateSubscription),
   logout: ctrlWrapper(logout),
 };

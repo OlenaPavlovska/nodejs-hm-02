@@ -1,5 +1,5 @@
 import User from "../models/user.js";
-import { HttpError, sendEmail } from "../helpers/index.js";
+import { HttpError } from "../helpers/index.js";
 import ctrlWrapper from "../decorators/cntrWrapper.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
